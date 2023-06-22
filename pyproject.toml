@@ -12,6 +12,7 @@ packages = [{ include = "libtimed", from = "src" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 requests = "^2.31.0"
+keyring = "^24.1.0"
 
 
 [tool.poetry.group.dev.dependencies]

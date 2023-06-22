@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 
+import base64
+import datetime
 import http.server
+import json
 import webbrowser
 from urllib.parse import urlparse
 
+import keyring
 import requests
 
 
@@ -27,14 +31,15 @@ class OIDCHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        self.wfile.write(b"<html><body><h1>Authentication successful.</h1>You may close this window now.<script>window.close();</script></body></html>")
+        self.wfile.write(
+            b"<html><body><h1>Authentication successful.</h1>You may close this window now.<script>window.close();</script></body></html>"
+        )
 
     # disable logging as it is too verbose
     def log_message(self, format, *args):
         _ = format
         _ = args
         pass
-
 
 
 class OIDCClient:
@@ -83,8 +88,41 @@ class OIDCClient:
         token = token_response.json()["access_token"]
         return token
 
+    def check_expired(self, token):
+        # decode the token
+        token_parts = token.split(".")[1]
+        # Add padding
+        token_parts += "=" * ((4 - len(token_parts) % 4) % 4)
+        # Convet to bytes
+        token_bytes = token_parts.encode("ascii")
+        # base64 decode + utf-8 decode
+        token_json = base64.b64decode(token_bytes).decode("utf-8")
+        # json to dict
+        token_dict = json.loads(token_json)
+        # get the expiration time
+        expires_at = token_dict["exp"]
+        # get the current time
+        now = datetime.datetime.now()
+        # check if the token is expired
+        return now.timestamp() < expires_at
+
+    def keyring_get(self):
+        return keyring.get_password("system", "libtimed_token_" + self.client_id)
+
+    def keyring_set(self, token):
+        keyring.set_password("system", "libtimed_token_" + self.client_id, token)
+
     def authorize(self):
+        cached_token = self.keyring_get()
+        if cached_token:
+            if self.check_expired(cached_token):
+                return cached_token
+
         if self.start_browser_flow():
-            return self.get_token()
+            token = self.get_token()
+            if not token:
+                return False
+            self.keyring_set(token)
+            return token
         else:
             return False

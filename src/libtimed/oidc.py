@@ -11,12 +11,10 @@ class OIDCHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     code = None
 
     def do_GET(self):
-        print(f"GET {urlparse(self.path).query}")
         url_path = self.path
         # get the "code" parameter from the query string
         try:
             OIDCHTTPRequestHandler.code = urlparse(url_path).query.split("=")[2]
-            print(f"Authorization code: {OIDCHTTPRequestHandler.code}")
         except IndexError:
             self.send_response(400)
             self.send_header("Content-type", "text/html")
@@ -29,7 +27,14 @@ class OIDCHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        self.wfile.write(b"<html><body><script>window.close();</script></body></html>")
+        self.wfile.write(b"<html><body><h1>Authentication successful.</h1>You may close this window now.<script>window.close();</script></body></html>")
+
+    # disable logging as it is too verbose
+    def log_message(self, format, *args):
+        _ = format
+        _ = args
+        pass
+
 
 
 class OIDCClient:

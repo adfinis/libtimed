@@ -12,12 +12,6 @@ lint: ## Lint the code
 lint-fix: ## Lint and fix code
 	@poetry run sh -c "black . && isort ."
 
-# Targets to make my live easier
-
-.PHONY: edit
-edit:
-	@$(EDITOR) ./src/libtimed
-
-.PHONY: execute
-execute:
-	@poetry run ./src/libtimed/main.py
+.PHONY: test
+test: ## Test the code
+	@poetry run pytest --no-cov-on-fail --cov -vvv -s

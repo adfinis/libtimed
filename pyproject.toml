@@ -17,7 +17,34 @@ requests = "^2.31.0"
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
 pytest = "^7.3.2"
+pytest-coverage = "^0.0"
 isort = "^5.12.0"
+pdbpp = "^0.10.3"
+
+
+[tool.isort]
+known_first_party = ["libtimed"]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+combine_as_imports = true
+line_length = 88
+
+
+[tool.coverage.run]
+source = ["."]
+
+[tool.coverage.report]
+fail_under = 100
+exclude_lines = [
+  "pragma: no cover",
+  "pragma: todo cover",
+  "def __str__",
+  "def __unicode__",
+  "def __repr__",
+]
+omit = []
+show_missing = true
 
 
 [build-system]

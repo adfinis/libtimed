@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import time
+
 from libtimed import TimedAPIClient
 from libtimed.oidc import OIDCClient
 
@@ -21,6 +23,6 @@ oidc_client = OIDCClient(CLIENT_ID, AUTH_ENDPOINT, TOKEN_ENDPOINT, AUTH_PATH)
 token = oidc_client.authorize()
 client = TimedAPIClient(token, URL, API_NAMESPACE)
 
-time = client.overtime.get()
-total_hours = time.total_seconds() / 3600
-print(f"{total_hours:.1f}h")
+r = client.activities.start("made with libtimed")
+time.sleep(7)
+r = client.activities.stop()

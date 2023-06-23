@@ -23,7 +23,7 @@ class BaseModel:
     relationship_defaults: list[tuple]
     filter_defaults: list[tuple]
 
-    def get(self, filters={}, include=None, id=None) -> dict:
+    def get(self, filters={}, include=None, id=None):
         url = f"{self.url}/{id}" if id else self.url
         if id:
             params = include
@@ -49,13 +49,13 @@ class BaseModel:
 
         return resp["data"]
 
-    def post(self, attributes, relationships):
-        json = self.parse_post_patch_json(attributes, relationships)
+    def post(self, attributes={}, relationships={}):
+        json = self.parse_post_json(attributes, relationships)
         resp = self.client.session.post(self.url, json=json)
         return resp
 
-    def patch(self, id, attributes, relationships):
-        json = self.parse_post_patch_json(attributes, relationships)
+    def patch(self, id, attributes={}, relationships={}):
+        json = self.parse_patch_json(attributes, relationships, id=id)
         resp = self.client.session.patch(f"{self.url}/{id}", json=json)
         return resp
 
@@ -63,19 +63,26 @@ class BaseModel:
         # self.get but with different defaults
         raise NotImplementedError
 
-    def parse_post_patch_json(self, attributes, relationships):
+    def parse_post_json(self, attributes, relationships) -> dict:
         cls = self.__class__
         return {
             "data": {
-                "type": cls.resource_name,
                 "attributes": self._parsed_defaults(cls.attribute_defaults, attributes),
                 "relationships": self._parsed_relationships(
                     cls.relationship_defaults, relationships
                 ),
+                "type": cls.resource_name,
             }
         }
 
+    def parse_patch_json(self, *args, id):
+        json = self.parse_post_json(*args)
+        json["data"]["id"] = id
+        return json
+
     def _id_to_relationship(self, id, resource_name):
+        if not id:
+            return {"data": None}
         return {
             "data": {
                 "type": resource_name,
@@ -86,12 +93,11 @@ class BaseModel:
     def _parsed_relationships(self, defaults: list[tuple], relationships: dict) -> dict:
         parsed = self._parsed_defaults(defaults, relationships)
         return {
-            key: self._id_to_relationship(id, key + "s")
-            for key, value in parsed.items()
+            key: self._id_to_relationship(id, key + "s") for key, id in parsed.items()
         }
 
     def _parsed_value(self, value, type):
-        if type == datetime:
+        if isinstance(value, datetime):
             value = value.strftime("%H:%M:%S")
         if isinstance(value, timedelta):
             value = serialize_duration(value)
@@ -126,8 +132,7 @@ class Users(GetOnlyMixin, BaseModel):
         ("active", None, bool, "Only active/inactive users."),
     ]
 
-    @property
-    @functools.lru_cache()
+    @functools.cached_property
     def me(self):
         """Return the current logged in user."""
         return self.get(id="me")
@@ -212,9 +217,31 @@ class Activity(BaseModel):
         ("comment", "", str, "The comment on the activity"),
         ("date", date.today(), date, "The date of the activity"),
         ("from-time", datetime.now(), datetime, "The beginning time of the activity."),
+        ("to-time", None, datetime, "The end time of the activity."),
+        ("review", False, bool, "Needs to be reviewed."),
+        ("not-billable", False, bool, "Is not billable."),
     ]
 
     relationship_defaults = [
         ("task", None, "The id of the task of the activity"),
         ("user", "user-id", "The users id whoms't the activitty belongs to."),
     ]
+
+    @property
+    def current(self):
+        return (self.get({"active": True}) or [[]])[0]
+
+    def start(self, comment=""):
+        if self.current:
+            self.stop()
+        return self.post({"comment": comment})
+
+    def stop(self):
+        if self.current:
+            attributes = self.current["attributes"]
+            attributes["to-time"] = datetime.now()
+            r = self.patch(
+                self.current["id"],
+                attributes,
+            )
+            return r

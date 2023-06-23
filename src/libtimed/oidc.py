@@ -36,9 +36,7 @@ class OIDCHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         )
 
     # disable logging as it is too verbose
-    def log_message(self, format, *args):
-        _ = format
-        _ = args
+    def log_message(self, *args, **kwargs):
         pass
 
 

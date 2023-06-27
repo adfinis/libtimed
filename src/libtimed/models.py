@@ -1,16 +1,18 @@
 import functools
 from datetime import date, datetime, timedelta
 
+from requests import Response
+
 from libtimed.utils import deserialize_duration, handle_response, serialize_duration
 
 
 class GetOnlyMixin:
     message = "This model is get-only!"
 
-    def post(self, *args, **kwargs):
+    def post(self, *args, **kwargs) -> None:
         raise NotImplementedError(self.__class__.message)
 
-    def patch(self, *args, **kwargs):
+    def patch(self, *args, **kwargs) -> None:
         raise NotImplementedError(self.__class__.message)
 
 
@@ -23,7 +25,7 @@ class BaseModel:
     relationship_defaults: list[tuple]
     filter_defaults: list[tuple]
 
-    def get(self, filters={}, include=None, id=None):
+    def get(self, filters={}, include=None, id=None) -> dict:
         url = f"{self.url}/{id}" if id else self.url
         if id:
             params = include
@@ -49,12 +51,12 @@ class BaseModel:
 
         return resp["data"]
 
-    def post(self, attributes={}, relationships={}):
+    def post(self, attributes={}, relationships={}) -> Response:
         json = self.parse_post_json(attributes, relationships)
         resp = self.client.session.post(self.url, json=json)
         return resp
 
-    def patch(self, id, attributes={}, relationships={}):
+    def patch(self, id, attributes={}, relationships={}) -> Response:
         json = self.parse_patch_json(attributes, relationships, id=id)
         resp = self.client.session.patch(f"{self.url}/{id}", json=json)
         return resp
@@ -205,7 +207,7 @@ class Overtime(
         return overtime
 
 
-class Activity(BaseModel):
+class Activities(BaseModel):
     resource_name = "activities"
 
     filter_defaults = [
@@ -245,3 +247,18 @@ class Activity(BaseModel):
                 attributes,
             )
             return r
+
+
+class Customers(GetOnlyMixin, BaseModel):
+    resource_name = "customers"
+    filter_defaults = [("archived", None, bool, "Is project archived?")]
+
+
+class Projects(GetOnlyMixin, BaseModel):
+    resource_name = "projects"
+    filter_defaults = [("customer", None, int, "Customer of project")]
+
+
+class Tasks(GetOnlyMixin, BaseModel):
+    resource_name = "tasks"
+    filter_defaults = [("project", None, int, "Project of task")]

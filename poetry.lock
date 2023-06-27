@@ -591,6 +591,17 @@ files = [
 ]
 
 [[package]]
+name = "pyfzf"
+version = "0.3.1"
+description = "Python wrapper for junegunn's fuzzyfinder (fzf)"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyfzf-0.3.1-py3-none-any.whl", hash = "sha256:736f71563461b75f6f85b55345bdc638fa0dc14c32c857c59e8b1ca1cfa3cf4a"},
+    {file = "pyfzf-0.3.1.tar.gz", hash = "sha256:dd902e34cffeca9c3082f96131593dd20b4b3a9bba5b9dde1b0688e424b46bd2"},
+]
+
+[[package]]
 name = "pygments"
 version = "2.15.1"
 description = "Pygments is a syntax highlighting package written in Python."
@@ -782,4 +793,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "76fe2e3782c806ccf0d498262ac4bab5162878b9c61fa7de5dd60be0ee58b387"
+content-hash = "80a3d01c476136c2d29a74f5ce280d5985e00c7f1c0f3cf817b8415db2ebb42a"

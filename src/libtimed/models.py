@@ -43,7 +43,8 @@ class BaseModel:
                         (
                             include
                             for include in included
-                            if include["type"] == value["data"]["type"]
+                            if value.get("data")
+                            and include["type"] == value["data"]["type"]
                             and include["id"] == value["data"]["id"]
                         ),
                         None,

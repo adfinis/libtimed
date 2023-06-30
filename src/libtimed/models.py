@@ -52,13 +52,14 @@ class BaseModel:
 
         return resp["data"]
 
-    def post(self, attributes={}, relationships={}) -> Response:
-        json = self.parse_post_json(attributes, relationships)
+    def post(self, attributes={}, relationships={}, raw=False) -> Response:
+        json = self._parse_patch_create_json(attributes, relationships, raw)
         resp = self.client.session.post(self.url, json=json)
         return resp
 
-    def patch(self, id, attributes={}, relationships={}) -> Response:
-        json = self.parse_patch_json(attributes, relationships, id=id)
+    def patch(self, id, attributes={}, relationships={}, raw=False) -> Response:
+        json = self._parse_patch_create_json(attributes, relationships, raw)
+        json["data"]["id"] = id
         resp = self.client.session.patch(f"{self.url}/{id}", json=json)
         return resp
 
@@ -66,22 +67,19 @@ class BaseModel:
         # self.get but with different defaults
         raise NotImplementedError
 
-    def parse_post_json(self, attributes, relationships) -> dict:
+    def _parse_patch_create_json(self, attributes, relationships, raw: bool) -> dict:
         cls = self.__class__
         return {
             "data": {
                 "attributes": self._parsed_defaults(cls.attribute_defaults, attributes),
                 "relationships": self._parsed_relationships(
                     cls.relationship_defaults, relationships
-                ),
+                )
+                if not raw
+                else relationships,
                 "type": cls.resource_name,
             }
         }
-
-    def parse_patch_json(self, *args, id):
-        json = self.parse_post_json(*args)
-        json["data"]["id"] = id
-        return json
 
     def _id_to_relationship(self, id, resource_name):
         if not id:
@@ -234,19 +232,17 @@ class Activities(BaseModel):
     def current(self):
         return (self.get({"active": True}) or [[]])[0]
 
-    def start(self, comment=""):
+    def start(self, attributes: dict, relationships: dict):
         if self.current:
             self.stop()
-        return self.post({"comment": comment})
+        return self.post(attributes, relationships)
 
     def stop(self):
         if self.current:
             attributes = self.current["attributes"]
+            relationships = self.current["relationships"]
             attributes["to-time"] = datetime.now()
-            r = self.patch(
-                self.current["id"],
-                attributes,
-            )
+            r = self.patch(self.current["id"], attributes, relationships, raw=True)
             return r
 
 

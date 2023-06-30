@@ -23,6 +23,8 @@ oidc_client = OIDCClient(CLIENT_ID, AUTH_ENDPOINT, TOKEN_ENDPOINT, AUTH_PATH)
 token = oidc_client.authorize()
 client = TimedAPIClient(token, URL, API_NAMESPACE)
 
-r = client.activities.start("made with libtimed")
+attributes = {"comment": "made with libtimed"}
+relationships = {"task": "3605343"}
+r = client.activities.start(attributes, relationships)
 time.sleep(7)
 r = client.activities.stop()

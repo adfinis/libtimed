@@ -25,7 +25,7 @@ class BaseModel:
     relationship_defaults: list[tuple]
     filter_defaults: list[tuple]
 
-    def get(self, filters={}, include=None, id=None) -> dict:
+    def get(self, filters={}, include=None, id=None, raw=False) -> dict:
         url = f"{self.url}/{id}" if id else self.url
         if id:
             params = include
@@ -50,6 +50,9 @@ class BaseModel:
                         None,
                     )
 
+        if raw:
+            resp["included"] = None
+            return resp
         return resp["data"]
 
     def post(self, attributes={}, relationships={}, raw=False) -> Response:
@@ -194,15 +197,13 @@ class Overtime(
     ]
 
     def get(self, *args, raw=False, **kwargs):
-        overtimes = super().get(*args, **kwargs)
-        overtime = (
-            [
-                deserialize_duration(overtime["attributes"]["balance"])
-                for overtime in overtimes
-            ]
-            if not raw and not kwargs.get("include")
-            else overtimes
-        )[0]
+        kwargs["raw"] = raw
+        data = super().get(*args, **kwargs)
+        if raw:
+            return data
+        elif kwargs.get("include"):
+            return data[0]
+        overtime = deserialize_duration(data[0]["attributes"]["balance"])
         return overtime
 
 

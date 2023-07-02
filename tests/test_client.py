@@ -11,3 +11,8 @@ def test_overtime(client):
 def test_users(client):
     result = client.users.get()
     assert all(isinstance(user, dict) for user in result)
+
+
+def test_reports(client):
+    result = client.reports.get()
+    assert result

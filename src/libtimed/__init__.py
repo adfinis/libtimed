@@ -12,9 +12,9 @@ class TimedAPIClient:
         self.session.headers["Content-Type"] = "application/vnd.api+json"
 
         # Models
-        self.users: models.Users = models.Users(self)
-        self.reports: models.Reports = models.Reports(self)
-        self.overtime: models.Overtime = models.Overtime(self)
+        self.users = models.Users(self)
+        self.reports = models.Reports(self)
+        self.overtime = models.WorktimeBalances(self)
         self.activities = models.Activities(self)
         self.customers = models.Customers(self)
         self.tasks = models.Tasks(self)

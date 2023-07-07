@@ -1,9 +1,27 @@
 import functools
 from datetime import date, datetime, timedelta
+from enum import Enum
 
+from inflection import underscore
 from requests import Response
 
-from libtimed.utils import deserialize_duration, handle_response, serialize_duration
+from libtimed import transforms
+
+DATE = ("date", date.today(), transforms.Date)
+FROM_DATE = ("from_date", None, transforms.Date)
+TO_DATE = ("to_date", None, transforms.Date)
+DURATION = ("duration", timedelta(minutes=15), transforms.Duration)
+COMMENT = ("comment", "", transforms.Type(str, False))
+REVIEW = ("review", False, transforms.Type(bool, False))
+NOT_BILLABLE = ("not-billable", False, transforms.Type(bool, False))
+NAME = ("name", None, transforms.Type(str))
+
+
+class UserOrdering(Enum):
+    EMAIL = "email"
+    FIRST_NAME = "first-name"
+    LAST_NAME = "last_name"
+    USERNAME = "username"
 
 
 class GetOnlyMixin:
@@ -20,121 +38,127 @@ class BaseModel:
     def __init__(self, client) -> None:
         self.client = client
 
-    resource_name: str
-    attribute_defaults: list[tuple]
-    relationship_defaults: list[tuple]
-    filter_defaults: list[tuple]
+    attributes: list[tuple]
+    relationships: list[tuple]
+    filters: list[tuple]
 
     def get(self, filters={}, include=None, id=None, raw=False) -> dict:
         url = f"{self.url}/{id}" if id else self.url
         if id:
             params = include
         else:
-            params = self._parsed_defaults(self.__class__.filter_defaults, filters)
+            params = self._parse_filters(filters)
             if include:
                 params["include"] = include
-        resp = self.client.session.get(url, params=params)
-        resp = handle_response(resp).json()
+                # TODO: map included resources to relationships
+                raw = True
 
-        if included := resp.get("included"):
-            for data in resp["data"]:
-                for key, value in data["relationships"].items():
-                    data["relationships"][key] = next(
+        resp = self.client.session.get(url, params=params)
+        resp = resp.json()
+
+        # de-serialize
+        if data := ([resp.get("data")] if id else resp.get("data")):
+            for item in data:
+                for key, value in item["attributes"].items():
+                    transform = next(
                         (
-                            include
-                            for include in included
-                            if value.get("data")
-                            and include["type"] == value["data"]["type"]
-                            and include["id"] == value["data"]["id"]
+                            transform
+                            for name, _, transform in self.__class__.attributes
+                            if name == key
                         ),
                         None,
                     )
+                    item["attributes"][key] = (
+                        (transform).deserialize(value) if transform else value
+                    )
+                relationships = item.get("relationships")
+                if not relationships:
+                    continue
+                for key, value in relationships.items():
+                    related_model = next(
+                        (
+                            related_model
+                            for name, _, related_model, in self.__class__.relationships
+                            if name == key
+                        ),
+                        None,
+                    )
+                    item["relationships"][key] = (
+                        transforms.Relationship(related_model).deserialize(value)
+                        if related_model
+                        else value
+                    )
+        return resp if raw else resp.get("data")
 
-        if raw:
-            resp["included"] = None
-            return resp
-        return resp["data"]
-
-    def post(self, attributes={}, relationships={}, raw=False) -> Response:
-        json = self._parse_patch_create_json(attributes, relationships, raw)
+    def post(self, attributes={}, relationships={}) -> Response:
+        json = self._parse_post_json(attributes, relationships)
         resp = self.client.session.post(self.url, json=json)
         return resp
 
-    def patch(self, id, attributes={}, relationships={}, raw=False) -> Response:
-        json = self._parse_patch_create_json(attributes, relationships, raw)
+    def patch(self, id, attributes={}, relationships={}) -> Response:
+        json = self._parse_post_json(attributes, relationships)
         json["data"]["id"] = id
         resp = self.client.session.patch(f"{self.url}/{id}", json=json)
         return resp
 
-    def all(self, filters, include=None):
-        # self.get but with different defaults
-        raise NotImplementedError
+    def delete(self, id) -> Response:
+        return self.client.session.delete(f"{self.url}/{id}")
 
-    def _parse_patch_create_json(self, attributes, relationships, raw: bool) -> dict:
-        cls = self.__class__
+    @classmethod
+    @property
+    def resource_name(cls):
+        return underscore(cls.__name__).replace("_", "-")
+
+    def _parse_post_json(self, attributes, relationships) -> dict:
         return {
             "data": {
-                "attributes": self._parsed_defaults(cls.attribute_defaults, attributes),
-                "relationships": self._parsed_relationships(
-                    cls.relationship_defaults, relationships
-                )
-                if not raw
-                else relationships,
-                "type": cls.resource_name,
+                "attributes": self._parse_attributes(attributes),
+                "relationships": self._parse_relationships(relationships),
+                "type": self.resource_name,
             }
         }
 
-    def _id_to_relationship(self, id, resource_name):
-        if not id:
-            return {"data": None}
+    def _parse_attributes(self, passed_attributes: dict = {}):
+        attributes = self.__class__.attributes
+
         return {
-            "data": {
-                "type": resource_name,
-                "id": id,
-            }
+            name: (transform).serialize((passed_attributes.get(name) or value))
+            for name, value, transform in attributes
         }
 
-    def _parsed_relationships(self, defaults: list[tuple], relationships: dict) -> dict:
-        parsed = self._parsed_defaults(defaults, relationships)
-        return {
-            key: self._id_to_relationship(id, key + "s") for key, id in parsed.items()
-        }
+    def _parse_filters(self, passed_filters: dict = {}):
+        filters = self.__class__.filters
 
-    def _parsed_value(self, value, type):
-        if isinstance(value, datetime):
-            value = value.strftime("%H:%M:%S")
-        if isinstance(value, timedelta):
-            value = serialize_duration(value)
-        if isinstance(value, date):
-            value = value.isoformat()
-        return value if value != "user-id" else self.client.users.me["id"]
-
-    def _parsed_defaults(self, defaults: list[tuple], values: dict) -> dict:
         return {
-            default[0]: self._parsed_value(
-                values.get(default[0]) or default[1],
-                default[2] if len(default) > 2 else dict,
+            name: (transform).serialize(
+                passed_filters.get(name) or value, is_filter=True, client=self.client
             )
-            for default in defaults
+            for name, value, transform in filters
+        }
+
+    def _parse_relationships(self, passed_relationships):
+        relationships = self.__class__.relationships
+
+        return {
+            name: transforms.Relationship(related_model).serialize(
+                passed_relationships.get(name) or value, client=self.client
+            )
+            for name, value, related_model in relationships
         }
 
     @functools.cached_property
     def url(self):
-        return self.client.url + self.__class__.resource_name
+        return self.client.url + self.resource_name
 
 
 class Users(GetOnlyMixin, BaseModel):
-    resource_name = "users"
-
-    filter_defaults = [
-        (
-            "ordering",
-            "username",
-            str,
-            "After what field should the users be ordered, can be 'email', 'username', 'first-name' or 'last-name'",
-        ),
-        ("active", None, bool, "Only active/inactive users."),
+    filters = [
+        ("ordering", UserOrdering.USERNAME, transforms.Enum(UserOrdering)),
+        ("active", None, transforms.Type(bool)),
     ]
+
+    attributes = []
+    relationships = []
 
     @functools.cached_property
     def me(self):
@@ -142,101 +166,77 @@ class Users(GetOnlyMixin, BaseModel):
         return self.get(id="me")
 
 
-class Reports(BaseModel):
-    resource_name = "reports"
-
-    attribute_defaults = [
-        ("comment", None, str, "Comment -> what exactly did you work on"),
-        ("date", date.today(), date, "Date of the report."),
-        (
-            "duration",
-            timedelta(minutes=15),
-            timedelta,
-            "Duration, only in 15 min differences.",
-        ),
-        ("review", False, bool, "Needs to be reviewed."),
-        ("not-billable", False, bool, "Is not billable."),
-    ]
-    relationship_defaults = [
-        (
-            "user",
-            "user-id",
-            "The users id, defaults to the logged in users id, another users id may require elevated permissions.",
-        ),
-        ("task", None, "The tasks id."),
-    ]
-
-    filter_defaults = [
-        (
-            "user",
-            "user-id",
-            int,
-            "The users id, another users id requires elevated permissions.",
-        ),
-        ("date", date.today(), date, "Date of the report."),
-        ("from_date", None, date, "Date of the report."),
-        ("to_date", None, date, "Date of the report."),
-    ]
+CURRENT_USER_FILTER = (
+    "user",
+    transforms.RelationShipProperty("me"),
+    transforms.Relationship(Users),
+)
+CURRENT_USER_RELATIONSHIP = ("user", transforms.RelationShipProperty("me"), Users)
 
 
-class Overtime(
+class WorktimeBalances(
     GetOnlyMixin,
     BaseModel,
 ):
-    resource_name = "worktime-balances"
-    filter_defaults = [
-        (
-            "user",
-            "user-id",
-            int,
-            "The user, using other users might require elevated permissions.",
-        ),
-        ("date", date.today(), date, "Overtime on that date."),
-        ("from_date", None, date, "Overtime from this date."),
-        ("to_date", None, date, "Overtime to this date."),
-    ]
+    filters = [CURRENT_USER_FILTER, DATE, FROM_DATE, TO_DATE]
+    attributes = [DATE, ("balance", None, transforms.Duration)]
+    relationships = [("user", None, Users)]
 
-    def get(self, *args, raw=False, **kwargs):
-        kwargs["raw"] = raw
-        data = super().get(*args, **kwargs)
-        if raw:
-            return data
-        elif kwargs.get("include"):
-            return data[0]
-        overtime = deserialize_duration(data[0]["attributes"]["balance"])
-        return overtime
+    def get(self, *args, **kwargs):
+        overtimes = super().get(*args, **kwargs)
+        return (
+            overtimes
+            if (kwargs.get("raw") or kwargs.get("include"))
+            else overtimes[0]["attributes"]["balance"]
+        )
+
+
+class Customers(GetOnlyMixin, BaseModel):
+    filters = [("archived", None, transforms.Type(bool))]
+    attributes = [NAME, ("archived", False, transforms.Type(bool, False))]
+    relationships = []
+
+
+class Projects(GetOnlyMixin, BaseModel):
+    filters = [("customer", None, transforms.Relationship(Customers))]
+    attributes = [NAME]
+    relationships = [("customer", None, Customers)]
+
+
+class Tasks(GetOnlyMixin, BaseModel):
+    filters = [("project", None, transforms.Relationship(Projects))]
+    attributes = [NAME]
+    relationships = [("project", None, Projects)]
 
 
 class Activities(BaseModel):
-    resource_name = "activities"
-
-    filter_defaults = [
-        ("active", None, bool, "Is the activity currently active?"),
-        ("day", date.today(), date, "The day/date if the Activity"),
+    filters = [
+        ("active", None, transforms.Type(bool)),
+        ("day", date.today(), transforms.Date),
     ]
 
-    attribute_defaults = [
-        ("comment", "", str, "The comment on the activity"),
-        ("date", date.today(), date, "The date of the activity"),
-        ("from-time", datetime.now(), datetime, "The beginning time of the activity."),
-        ("to-time", None, datetime, "The end time of the activity."),
-        ("review", False, bool, "Needs to be reviewed."),
-        ("not-billable", False, bool, "Is not billable."),
+    attributes = [
+        ("from-time", datetime.now(), transforms.Time),
+        ("to-time", None, transforms.Time),
+        COMMENT,
+        DATE,
+        REVIEW,
+        NOT_BILLABLE,
     ]
 
-    relationship_defaults = [
-        ("task", None, "The id of the task of the activity"),
-        ("user", "user-id", "The users id whoms't the activitty belongs to."),
+    relationships = [
+        CURRENT_USER_RELATIONSHIP,
+        ("task", None, Tasks),
     ]
 
     @property
     def current(self):
-        return (self.get({"active": True}) or [[]])[0]
+        return (self.get({"active": True}) or [{}])[0]
 
-    def start(self, attributes: dict, relationships: dict):
+    def start(self, **kwargs):
         if self.current:
             self.stop()
-        return self.post(attributes, relationships)
+        return self.post(**kwargs)
 
     def stop(self):
         if self.current:
@@ -247,16 +247,9 @@ class Activities(BaseModel):
             return r
 
 
-class Customers(GetOnlyMixin, BaseModel):
-    resource_name = "customers"
-    filter_defaults = [("archived", None, bool, "Is project archived?")]
+class Reports(BaseModel):
+    attributes = [COMMENT, DATE, DURATION, REVIEW, NOT_BILLABLE]
 
+    relationships = [CURRENT_USER_RELATIONSHIP, ("task", None, Tasks)]
 
-class Projects(GetOnlyMixin, BaseModel):
-    resource_name = "projects"
-    filter_defaults = [("customer", None, int, "Customer of project")]
-
-
-class Tasks(GetOnlyMixin, BaseModel):
-    resource_name = "tasks"
-    filter_defaults = [("project", None, int, "Project of task")]
+    filters = [CURRENT_USER_FILTER, DATE, FROM_DATE, TO_DATE]

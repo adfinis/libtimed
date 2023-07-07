@@ -241,11 +241,9 @@ class Activities(BaseModel):
     def stop(self):
         if self.current:
             attributes = self.current["attributes"]
+            relationships = self.current["relationships"]
             attributes["to-time"] = datetime.now()
-            r = self.patch(
-                self.current["id"],
-                attributes,
-            )
+            r = self.patch(self.current["id"], attributes, relationships, raw=True)
             return r
 
 

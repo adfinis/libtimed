@@ -43,6 +43,69 @@ class BaseModel:
     relationships: list[tuple]
     filters: list[tuple]
 
+    def _deserialize(self, item, included):
+        for key, value in item["attributes"].items():
+            transform = next(
+                (
+                    transform
+                    for name, _, transform in self.__class__.attributes
+                    if name == key
+                ),
+                None,
+            )
+            item["attributes"][key] = (
+                (transform).deserialize(value) if transform else value
+            )
+        relationships = item.get("relationships")
+        if not relationships:
+            return item
+        for key, value in relationships.items():
+            if not value:
+                continue
+            if value.get("data"):
+                data = value["data"]
+                if isinstance(data, list):
+                    included_items = []
+                    for rel_data in data:
+                        item_type = rel_data["type"]
+                        item_id = rel_data["id"]
+                        included_item = next(
+                            (
+                                included_item
+                                for included_item in included
+                                if included_item.get("type") == item_type
+                                and included_item.get("id") == item_id
+                            ),
+                            None,
+                        )
+                        if included_item:
+                            included_model = self.client._type_map[item_type](
+                                self.client
+                            )
+                            included_items.append(
+                                included_model._deserialize(included_item, included)
+                            )
+                    item["relationships"][key] = included_items
+                else:
+                    item_type = data["type"]
+                    item_id = data["id"]
+                    included_item = next(
+                        (
+                            included_item
+                            for included_item in included
+                            if included_item.get("type") == item_type
+                            and included_item.get("id") == item_id
+                        ),
+                        None,
+                    )
+                    if included_item:
+                        included_model = self.client._type_map[item_type](self.client)
+                        item["relationships"][key] = included_model._deserialize(
+                            included_item, included
+                        )
+
+        return item
+
     def get(
         self,
         filters={},
@@ -62,47 +125,7 @@ class BaseModel:
         # de-serialize
         if data := ([resp.get("data")] if id else resp.get("data")):
             for item in data:
-                for key, value in item["attributes"].items():
-                    transform = next(
-                        (
-                            transform
-                            for name, _, transform in self.__class__.attributes
-                            if name == key
-                        ),
-                        None,
-                    )
-                    item["attributes"][key] = (
-                        (transform).deserialize(value) if transform else value
-                    )
-                relationships = item.get("relationships")
-                if not relationships:
-                    continue
-                for key, value in relationships.items():
-                    related_model = next(
-                        (
-                            related_model
-                            for name, _, related_model, in self.__class__.relationships
-                            if name == key
-                        ),
-                        None,
-                    )
-                    if include and value["data"]:
-                        # Get item with the same type and id from included and provide that as value
-                        related_item = [
-                            item
-                            for item in resp.get("included", [])
-                            if item.get("type") == value["data"]["type"]
-                            and item.get("id") == value["data"]["id"]
-                        ]
-                        if related_item:
-                            value = related_item[0]
-                    item["relationships"][key] = (
-                        transforms.Relationship(related_model).deserialize(
-                            value, raw=True
-                        )
-                        if related_model
-                        else value
-                    )
+                item = self._deserialize(item, resp.get("included", []))
         return resp if raw else resp.get("data")
 
     def post(self, attributes={}, relationships={}) -> Response:

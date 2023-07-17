@@ -11,4 +11,6 @@ def test_get_only_mixin(client):
 
 def test_includes(client):
     overtime = client.overtime.get(include="user")
-    assert overtime["data"][0]["relationships"]["user"]["id"] == client.users.me["id"]
+    assert overtime[0]["relationships"]["user"]["id"] == client.users.me["id"]
+    raw_overtime = client.overtime.get(include="user", raw=True)
+    assert raw_overtime["data"] == overtime

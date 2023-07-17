@@ -1,3 +1,5 @@
+from inspect import isclass
+
 import requests
 
 from libtimed import models
@@ -20,3 +22,10 @@ class TimedAPIClient:
         self.tasks = models.Tasks(self)
         self.projects = models.Projects(self)
         # self.employments = models.Employments(self)
+
+        self._type_map = {
+            getattr(models, model).resource_name: getattr(models, model)
+            for model in dir(models)
+            if isclass(getattr(models, model))
+            and issubclass(getattr(models, model), models.BaseModel)
+        }

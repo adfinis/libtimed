@@ -94,11 +94,12 @@ class BaseModel:
                             if item.get("type") == value["data"]["type"]
                             and item.get("id") == value["data"]["id"]
                         ]
-                        print(related_item)
                         if related_item:
                             value = related_item[0]
                     item["relationships"][key] = (
-                        transforms.Relationship(related_model).deserialize(value)
+                        transforms.Relationship(related_model).deserialize(
+                            value, raw=True
+                        )
                         if related_model
                         else value
                     )

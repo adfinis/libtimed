@@ -105,8 +105,8 @@ class Relationship(BaseTransform):
         }
         return return_value["data"].get("id") if is_filter else return_value
 
-    def deserialize(self, value: dict) -> Optional[dict]:
-        data = value["data"] or {}
+    def deserialize(self, value: dict, raw=False) -> Optional[dict]:
+        data = value if raw else value.get("data") or {}
         if (
             recieved_type := (data or {}).get("type")
         ) != self.related_model.resource_name:

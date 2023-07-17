@@ -1,6 +1,7 @@
 import functools
 from datetime import date, datetime, timedelta
 from enum import Enum
+from typing import Optional, Union
 
 from inflection import underscore
 from requests import Response
@@ -42,16 +43,18 @@ class BaseModel:
     relationships: list[tuple]
     filters: list[tuple]
 
-    def get(self, filters={}, include=None, id=None, raw=False) -> dict:
+    def get(
+        self,
+        filters={},
+        include: Optional[str] = None,
+        id: Union[str, int, None] = None,
+        raw=False,
+    ) -> dict:
         url = f"{self.url}/{id}" if id else self.url
         if id:
-            params = include
+            params = {"include": include}
         else:
-            params = self._parse_filters(filters)
-            if include:
-                params["include"] = include
-                # TODO: map included resources to relationships
-                raw = True
+            params = {**self._parse_filters(filters), "include": include}
 
         resp = self.client.session.get(url, params=params)
         resp = resp.json()
@@ -83,8 +86,20 @@ class BaseModel:
                         ),
                         None,
                     )
+                    if include and value["data"]:
+                        # Get item with the same type and id from included and provide that as value
+                        related_item = [
+                            item
+                            for item in resp.get("included", [])
+                            if item.get("type") == value["data"]["type"]
+                            and item.get("id") == value["data"]["id"]
+                        ]
+                        if related_item:
+                            value = related_item[0]
                     item["relationships"][key] = (
-                        transforms.Relationship(related_model).deserialize(value)
+                        transforms.Relationship(related_model).deserialize(
+                            value, raw=True
+                        )
                         if related_model
                         else value
                     )
@@ -243,7 +258,7 @@ class Activities(BaseModel):
             attributes = self.current["attributes"]
             relationships = self.current["relationships"]
             attributes["to-time"] = datetime.now()
-            r = self.patch(self.current["id"], attributes, relationships, raw=True)
+            r = self.patch(self.current["id"], attributes, relationships)
             return r
 
 

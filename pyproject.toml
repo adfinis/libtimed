@@ -10,7 +10,7 @@ readme = "README.md"
 packages = [{ include = "libtimed", from = "src" }]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 requests = "^2.31.0"
 keyring = "^24.1.0"
 inflection = "^0.5.1"
@@ -57,3 +57,12 @@ show_missing = true
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.semantic_release]
+version_toml = [
+    "pyproject.toml:tool.poetry.version"
+]
+major_on_zero = false
+branch = "main"
+build_command = "pip install poetry && poetry build"

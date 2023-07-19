@@ -2,6 +2,17 @@
 
 
 
+## v0.2.0 (2023-07-19)
+
+### Breaking
+
+* feat!: SSO using well-known autoconfiguration ([`f290229`](https://github.com/adfinis/libtimed/commit/f290229764409ac876b635d53e92eb03784d9580))
+
+### Chore
+
+* chore: Add PKGBUILD ([`1cd63e6`](https://github.com/adfinis/libtimed/commit/1cd63e6be23c984360aa51c3df6cd0273177f21e))
+
+
 ## v0.1.0 (2023-07-18)
 
 ### Breaking

@@ -41,11 +41,16 @@ class OIDCHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 
 class OIDCClient:
-    def __init__(self, client_id, authorization_endpoint, token_endpoint, auth_path):
+    def __init__(self, client_id, sso_url, sso_realm, auth_path):
         self.client_id = client_id
-        self.authorization_endpoint = authorization_endpoint
-        self.token_endpoint = token_endpoint
+        self.sso_url = sso_url
+        self.sso_realm = sso_realm
         self.auth_path = auth_path
+
+    def autoconfig(self):
+        data = requests.get(f"{self.sso_ur}l/auth/realms/{self.sso_realm}/.well-known/openid-configuration").json()
+        self.authorization_endpoint = data["authorization_endpoint"]
+        self.token_endpoint = data["token_endpoint"]
 
     def start_browser_flow(self):
         # construct the authorization request
@@ -116,6 +121,7 @@ class OIDCClient:
             if self.check_expired(cached_token):
                 return cached_token
 
+        self.autoconfig()
         if self.start_browser_flow():
             token = self.get_token()
             if not token:

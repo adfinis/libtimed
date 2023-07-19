@@ -2,6 +2,13 @@
 
 
 
+## v0.2.1 (2023-07-19)
+
+### Fix
+
+* fix: Fix SSO ([`05f05fb`](https://github.com/adfinis/libtimed/commit/05f05fb550351b0ab502f0806ce413a107be8aba))
+
+
 ## v0.2.0 (2023-07-19)
 
 ### Breaking

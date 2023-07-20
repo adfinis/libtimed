@@ -1,7 +1,7 @@
 from inspect import isclass
 
 import requests
-
+import requests_cache
 from libtimed import models
 
 
@@ -12,7 +12,9 @@ class TimedAPIClient:
         self.session = requests.Session()
         self.session.headers["Authorization"] = f"Bearer {token}"
         self.session.headers["Content-Type"] = "application/vnd.api+json"
-
+        self.cached_session = requests_cache.CachedSession(expire_after=60 * 60 * 24)
+        self.cached_session.headers["Authorization"] = f"Bearer {token}"
+        self.cached_session.headers["Content-Type"] = "application/vnd.api+json"
         # Models
         self.users = models.Users(self)
         self.reports = models.Reports(self)

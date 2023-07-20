@@ -112,6 +112,7 @@ class BaseModel:
         include: Optional[str] = None,
         id: Union[str, int, None] = None,
         raw=False,
+        cached=False
     ) -> dict:
         url = f"{self.url}/{id}" if id else self.url
         if id:
@@ -119,7 +120,8 @@ class BaseModel:
         else:
             params = {**self._parse_filters(filters), "include": include}
 
-        resp = self.client.session.get(url, params=params)
+        session = self.client.cached_session if cached else self.client.session
+        resp = session.get(url, params=params)
         resp = resp.json()
 
         # de-serialize

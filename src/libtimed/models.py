@@ -283,7 +283,7 @@ class Activities(BaseModel):
             attributes = self.current["attributes"]
             relationships = self.current["relationships"]
             attributes["to-time"] = datetime.now()
-            r = self.patch(self.current["id"], attributes, relationships)
+            r = self.patch({"id": self.current["id"]}, attributes, relationships)
             return r
 
 

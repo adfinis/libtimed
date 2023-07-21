@@ -2,6 +2,23 @@
 
 
 
+## v0.3.0 (2023-07-21)
+
+### Chore
+
+* chore: run lint-fix ([`d0baf17`](https://github.com/adfinis/libtimed/commit/d0baf17987d22ea52d82914c28ace258a1627085))
+
+### Feature
+
+* feat: Add get_cached method ([`082ec40`](https://github.com/adfinis/libtimed/commit/082ec407f6cf988230bac6bdba5610851b90eaa1))
+
+### Unknown
+
+* Merge pull request #1 from adfinis/add_cache
+
+feat: Add get_cached method ([`24cb9f1`](https://github.com/adfinis/libtimed/commit/24cb9f1867b647c41c586d58d34c7cf7823fce41))
+
+
 ## v0.2.1 (2023-07-19)
 
 ### Fix

@@ -2,6 +2,19 @@
 
 
 
+## v0.3.1 (2023-07-21)
+
+### Chore
+
+* chore: Add current aur stuffs ([`78dd915`](https://github.com/adfinis/libtimed/commit/78dd91508edaf8f562a70990e22176e52c82960b))
+
+### Fix
+
+* fix: Use cache folder for caching ([`e617a19`](https://github.com/adfinis/libtimed/commit/e617a193e27de0f15004fa7bb773cbd26ed3cfa6))
+
+* fix: Fix activity stop bug ([`5893e9f`](https://github.com/adfinis/libtimed/commit/5893e9feca162f1cdd4277a6017c62d8ab324da5))
+
+
 ## v0.3.0 (2023-07-21)
 
 ### Chore

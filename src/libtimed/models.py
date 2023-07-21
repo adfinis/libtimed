@@ -112,7 +112,7 @@ class BaseModel:
         include: Optional[str] = None,
         id: Union[str, int, None] = None,
         raw=False,
-        cached=False
+        cached=False,
     ) -> dict:
         url = f"{self.url}/{id}" if id else self.url
         if id:

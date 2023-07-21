@@ -48,7 +48,9 @@ class OIDCClient:
         self.auth_path = auth_path
 
     def autoconfig(self):
-        data = requests.get(f"{self.sso_url}/auth/realms/{self.sso_realm}/.well-known/openid-configuration").json()
+        data = requests.get(
+            f"{self.sso_url}/auth/realms/{self.sso_realm}/.well-known/openid-configuration"
+        ).json()
         self.authorization_endpoint = data["authorization_endpoint"]
         self.token_endpoint = data["token_endpoint"]
 

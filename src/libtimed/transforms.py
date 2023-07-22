@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from enum import Enum as EnumClass
-from typing import Optional, Type as TypingType, Union
+from typing import Callable, Optional, Type as TypingType, Union
 
 
 class SerializationError(ValueError):
@@ -24,8 +24,11 @@ class BaseTransform:
 class Type(BaseTransform):
     """Transform for types."""
 
-    def __init__(self, type: TypingType, allow_none: bool = True):
+    def __init__(
+        self, type: TypingType, allow_none: bool = True, pipe: Callable = lambda x: x
+    ):
         self.type = type
+        self.pipe = pipe
         self.allow_none = allow_none
 
     def _validate(self, value):
@@ -36,10 +39,10 @@ class Type(BaseTransform):
         return value
 
     def serialize(self, value, **_):
-        return self._validate(value)
+        return self.pipe(self._validate(value))
 
     def deserialize(self, value):
-        return self._validate(value)
+        return self.pipe(self._validate(value))
 
 
 class Duration(BaseTransform):

@@ -8,6 +8,7 @@ from requests import Response
 
 from libtimed import transforms
 
+ARCHIVED = ("archived", None, transforms.Type(bool))
 DATE = ("date", date.today(), transforms.Date)
 FROM_DATE = ("from_date", None, transforms.Date)
 TO_DATE = ("to_date", None, transforms.Date)
@@ -232,19 +233,19 @@ class WorktimeBalances(
 
 
 class Customers(GetOnlyMixin, BaseModel):
-    filters = [("archived", None, transforms.Type(bool))]
+    filters = [ARCHIVED]
     attributes = [NAME, ("archived", False, transforms.Type(bool, False))]
     relationships = []
 
 
 class Projects(GetOnlyMixin, BaseModel):
-    filters = [("customer", None, transforms.Relationship(Customers))]
+    filters = [("customer", None, transforms.Relationship(Customers)), ARCHIVED]
     attributes = [NAME]
     relationships = [("customer", None, Customers)]
 
 
 class Tasks(GetOnlyMixin, BaseModel):
-    filters = [("project", None, transforms.Relationship(Projects))]
+    filters = [("project", None, transforms.Relationship(Projects)), ARCHIVED]
     attributes = [NAME]
     relationships = [("project", None, Projects)]
 

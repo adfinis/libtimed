@@ -125,7 +125,7 @@ class Date(BaseTransform):
     def serialize(value: Union[date, str], **_) -> str:
         if isinstance(value, str):
             try:
-                value = datetime.fromisoformat(value)
+                value = datetime.fromisoformat(value).date()
             except ValueError:
                 raise SerializationError(
                     f"The provided value ({value}) is not formatted correctly."

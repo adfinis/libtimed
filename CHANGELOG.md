@@ -2,6 +2,17 @@
 
 
 
+## v0.4.0 (2023-07-22)
+
+### Feature
+
+* feat: archived filter on projects and tasks ([`d12296b`](https://github.com/adfinis/libtimed/commit/d12296bdb61d237af5345d22a8a492a344ec579b))
+
+### Fix
+
+* fix: use numerical bool value for archived ([`0070dfb`](https://github.com/adfinis/libtimed/commit/0070dfbd02803d87617ddd6002859827c9aeabac))
+
+
 ## v0.3.2 (2023-07-22)
 
 ### Fix

@@ -2,6 +2,19 @@
 
 
 
+## v0.3.2 (2023-07-22)
+
+### Fix
+
+* fix: date transform returning datetime instead of date ([`34911bf`](https://github.com/adfinis/libtimed/commit/34911bf04cfece1627dfb4f123cc7d00a5ce70e7))
+
+### Unknown
+
+* Merge pull request #8 from C0rydoras/fix-date-transform
+
+fix: date transform returning datetime instead of date ([`743c5f3`](https://github.com/adfinis/libtimed/commit/743c5f32d93ea3f83a3eb01cff93a4d44ee1bc31))
+
+
 ## v0.3.1 (2023-07-21)
 
 ### Chore

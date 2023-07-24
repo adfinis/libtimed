@@ -2,6 +2,17 @@
 
 
 
+## v0.4.1 (2023-07-24)
+
+### Chore
+
+* chore: Update AUR package ([`df3ec7e`](https://github.com/adfinis/libtimed/commit/df3ec7ec788b3eea1a888ffa4787bc6f26250f4a))
+
+### Fix
+
+* fix(models): Add correct default type for archived attribute ([`21a396d`](https://github.com/adfinis/libtimed/commit/21a396dd57c0a47bfa8f65d1aff1357cad387074))
+
+
 ## v0.4.0 (2023-07-22)
 
 ### Feature

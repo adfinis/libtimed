@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "libtimed"
-version = "0.4.0"
+version = "0.4.1"
 description = "Library to intreact with timed webapp."
 authors = [
   "Arthur Deierlein <arthur.deierlein@adfinis.com>",

@@ -2,6 +2,13 @@
 
 
 
+## v0.4.2 (2023-07-24)
+
+### Fix
+
+* fix: allow to pass relatioships to rel transform ([`af2efde`](https://github.com/adfinis/libtimed/commit/af2efde751b47219828f382927cbb9413fede5ec))
+
+
 ## v0.4.1 (2023-07-24)
 
 ### Chore

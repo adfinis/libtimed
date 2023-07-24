@@ -8,7 +8,7 @@ from requests import Response
 
 from libtimed import transforms
 
-ARCHIVED = ("archived", None, transforms.Type(bool, pipe=int))
+ARCHIVED = ("archived", False, transforms.Type(bool, pipe=int))
 DATE = ("date", date.today(), transforms.Date)
 FROM_DATE = ("from_date", None, transforms.Date)
 TO_DATE = ("to_date", None, transforms.Date)

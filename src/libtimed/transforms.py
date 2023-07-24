@@ -91,6 +91,8 @@ class Relationship(BaseTransform):
     ) -> Union[dict, str, None]:
         if not value:
             return {"data": None}
+        if isinstance(value, dict):
+            return value
         data = {}
         if isinstance(value, RelationShipProperty):
             if not client:

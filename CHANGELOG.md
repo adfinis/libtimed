@@ -2,6 +2,15 @@
 
 
 
+## v0.4.3 (2023-07-25)
+
+### Fix
+
+* fix(activities): Fix stopping
+
+fix(activities): Remove unnesscary transform ([`2beb356`](https://github.com/adfinis/libtimed/commit/2beb35673fa13563a982e74714e73c9b408d0681))
+
+
 ## v0.4.2 (2023-07-24)
 
 ### Fix

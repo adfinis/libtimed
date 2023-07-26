@@ -2,6 +2,13 @@
 
 
 
+## v0.4.4 (2023-07-26)
+
+### Fix
+
+* fix(models): Add transferred attribute ([`50341a3`](https://github.com/adfinis/libtimed/commit/50341a3c1e71a26eb2af0bf35d39b7ddc1e803ff))
+
+
 ## v0.4.3 (2023-07-25)
 
 ### Fix

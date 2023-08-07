@@ -60,7 +60,7 @@ known-first-party = ["libtimed"]
 combine-as-imports = true
 
 [tool.coverage.run]
-source = ["."]
+source = ["src"]
 
 [tool.coverage.report]
 fail_under = 100

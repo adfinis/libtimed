@@ -32,11 +32,11 @@ customer_name = pyfzf.FzfPrompt().prompt(
 if not customer_name:
     exit()
 
-customer = [
+customer = next(
     customer
     for customer in customers
     if customer["attributes"]["name"] == customer_name
-][0]
+)
 
 projects = client.projects.get({"customer": customer["id"]})
 
@@ -46,9 +46,9 @@ project_name = pyfzf.FzfPrompt().prompt(
 if not project_name:
     exit()
 
-project = [
+project = next(
     project for project in projects if project["attributes"]["name"] == project_name[0]
-][0]
+)
 tasks = client.tasks.get({"project": project["id"]})
 
 task_name = pyfzf.FzfPrompt().prompt([task["attributes"]["name"] for task in tasks])
@@ -56,7 +56,7 @@ task_name = pyfzf.FzfPrompt().prompt([task["attributes"]["name"] for task in tas
 if not task_name:
     exit()
 
-task = [task for task in tasks if task["attributes"]["name"] == task_name[0]][0]
+task = next(task for task in tasks if task["attributes"]["name"] == task_name[0])
 
 
 duration = input("Task duration [HH:MM:SS]: ")

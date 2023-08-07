@@ -1,13 +1,17 @@
+from collections.abc import Callable
 from datetime import date, datetime, timedelta
 from enum import Enum as EnumClass
-from typing import Callable, Optional, Type as TypingType, Union
+
+TIME_FORMAT = "%H:%M:%S"
 
 
 class SerializationError(ValueError):
+
     """Error raised only inside of Transforms when trying to (de)serialize values."""
 
 
 class BaseTransform:
+
     """Base class for serializers."""
 
     @staticmethod
@@ -22,10 +26,11 @@ class BaseTransform:
 
 
 class Type(BaseTransform):
+
     """Transform for types."""
 
     def __init__(
-        self, type: TypingType, allow_none: bool = True, pipe: Callable = lambda x: x
+        self, type: type, allow_none: bool = True, pipe: Callable = lambda x: x
     ):
         self.type = type
         self.pipe = pipe
@@ -46,10 +51,11 @@ class Type(BaseTransform):
 
 
 class Duration(BaseTransform):
+
     """Transform for durations."""
 
     @staticmethod
-    def serialize(duration: Union[timedelta, str], **_) -> str:
+    def serialize(duration: timedelta | str, **_) -> str:
         if isinstance(duration, str):
             # validate by calling deserialize on it
             return duration
@@ -68,8 +74,7 @@ class Duration(BaseTransform):
         if len(duration.split(" ")) != 1:
             days, duration = duration.split(" ")
         hours, minutes, seconds = map(int, duration.split(":"))
-        delta = timedelta(days=int(days), hours=hours, minutes=minutes, seconds=seconds)
-        return delta
+        return timedelta(days=int(days), hours=hours, minutes=minutes, seconds=seconds)
 
 
 class RelationShipProperty:
@@ -78,6 +83,7 @@ class RelationShipProperty:
 
 
 class Relationship(BaseTransform):
+
     """Transform for relationships. This is very hacky and should be replaced with a better solution."""
 
     def __init__(self, related_model) -> None:
@@ -85,10 +91,10 @@ class Relationship(BaseTransform):
 
     def serialize(
         self,
-        value: Union[int, str, RelationShipProperty, None],
+        value: int | str | RelationShipProperty | None,
         is_filter=False,
         client=None,
-    ) -> Union[dict, str, None]:
+    ) -> dict | str | None:
         if not value:
             return {"data": None}
         if isinstance(value, dict):
@@ -101,16 +107,16 @@ class Relationship(BaseTransform):
                 )
             try:
                 data["data"] = getattr(self.related_model(client), value.property_name)
-            except AttributeError:
+            except AttributeError as e:
                 raise SerializationError(
                     f"Unknown property {value} on {self.related_model}!"
-                )
+                ) from e
         return_value: dict = data or {
             "data": {"type": self.related_model.resource_name, "id": data or value}
         }
         return return_value["data"].get("id") if is_filter else return_value
 
-    def deserialize(self, value: dict) -> Optional[dict]:
+    def deserialize(self, value: dict) -> dict | None:
         data = value.get("data") or {}
         if (
             recieved_type := (data or {}).get("type")
@@ -124,17 +130,18 @@ class Relationship(BaseTransform):
 
 
 class Date(BaseTransform):
+
     """Transform for dates."""
 
     @staticmethod
-    def serialize(value: Union[date, str], **_) -> str:
+    def serialize(value: date | str, **_) -> str:
         if isinstance(value, str):
             try:
                 value = datetime.fromisoformat(value).date()
-            except ValueError:
+            except ValueError as e:
                 raise SerializationError(
                     f"The provided value ({value}) is not formatted correctly."
-                )
+                ) from e
         return value if value is None else value.isoformat()
 
     @staticmethod
@@ -143,27 +150,28 @@ class Date(BaseTransform):
 
 
 class Time(BaseTransform):
+
     """Transform for times."""
 
     @staticmethod
-    def serialize(value: Union[datetime, str], **_) -> Optional[str]:
-        FORMAT = "%H:%M:%S"
+    def serialize(value: datetime | str, **_) -> str | None:
         if isinstance(value, str):
             try:
-                value = datetime.strptime(value, FORMAT)
-            except ValueError:
+                value = datetime.strptime(value, TIME_FORMAT)
+            except ValueError as e:
                 raise SerializationError(
-                    f"The provided value ({value}) is not formatted correctly ({FORMAT})."
-                )
-        return value.strftime(FORMAT) if value else None
+                    f"The provided value ({value}) is not formatted correctly ({TIME_FORMAT})."
+                ) from e
+
+        return value.strftime(TIME_FORMAT) if value else None
 
     @staticmethod
-    def deserialize(value) -> Optional[date]:
+    def deserialize(value) -> date | None:
         return datetime.strptime(value, "%H:%M:%S") if value else None
 
 
 class Enum(BaseTransform):
-    def __init__(self, enum: TypingType[EnumClass]) -> None:
+    def __init__(self, enum: type[EnumClass]) -> None:
         self.enum = enum
 
     def serialize(self, value, **_):

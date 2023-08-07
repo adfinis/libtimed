@@ -1,7 +1,6 @@
 import functools
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Optional, Union
 
 from inflection import underscore
 from requests import Response
@@ -109,9 +108,9 @@ class BaseModel:
 
     def get(
         self,
-        filters={},
-        include: Optional[str] = None,
-        id: Union[str, int, None] = None,
+        filters=None,
+        include: str | None = None,
+        id: str | int | None = None,
         raw=False,
         cached=False,
     ) -> dict:
@@ -131,16 +130,18 @@ class BaseModel:
                 item = self._deserialize(item, resp.get("included", []))
         return resp if raw else resp.get("data")
 
-    def post(self, attributes={}, relationships={}) -> Response:
+    def post(
+        self, attributes: dict | None = None, relationships: dict | None = None
+    ) -> Response:
         json = self._parse_post_json(attributes, relationships)
-        resp = self.client.session.post(self.url, json=json)
-        return resp
+        return self.client.session.post(self.url, json=json)
 
-    def patch(self, id, attributes={}, relationships={}) -> Response:
+    def patch(
+        self, id, attributes: dict | None = None, relationships: dict | None = None
+    ) -> Response:
         json = self._parse_post_json(attributes, relationships)
         json["data"]["id"] = id
-        resp = self.client.session.patch(f"{self.url}/{id}", json=json)
-        return resp
+        return self.client.session.patch(f"{self.url}/{id}", json=json)
 
     def delete(self, id) -> Response:
         return self.client.session.delete(f"{self.url}/{id}")
@@ -150,7 +151,9 @@ class BaseModel:
     def resource_name(cls):
         return underscore(cls.__name__).replace("_", "-")
 
-    def _parse_post_json(self, attributes, relationships) -> dict:
+    def _parse_post_json(
+        self, attributes: dict | None, relationships: dict | None
+    ) -> dict:
         return {
             "data": {
                 "attributes": self._parse_attributes(attributes),
@@ -159,15 +162,17 @@ class BaseModel:
             }
         }
 
-    def _parse_attributes(self, passed_attributes: dict = {}):
+    def _parse_attributes(self, passed_attributes: dict | None = None):
+        passed_attributes = passed_attributes or {}
         attributes = self.__class__.attributes
 
         return {
-            name: (transform).serialize((passed_attributes.get(name) or value))
+            name: (transform).serialize(passed_attributes.get(name) or value)
             for name, value, transform in attributes
         }
 
-    def _parse_filters(self, passed_filters: dict = {}):
+    def _parse_filters(self, passed_filters: dict | None = None):
+        passed_filters = passed_filters or {}
         filters = self.__class__.filters
 
         return {
@@ -177,7 +182,8 @@ class BaseModel:
             for name, value, transform in filters
         }
 
-    def _parse_relationships(self, passed_relationships):
+    def _parse_relationships(self, passed_relationships: dict | None = None):
+        passed_relationships = passed_relationships or {}
         relationships = self.__class__.relationships
 
         return {
@@ -285,8 +291,8 @@ class Activities(BaseModel):
             attributes = self.current["attributes"]
             relationships = self.current["relationships"]
             attributes["to-time"] = datetime.now()
-            r = self.patch(self.current["id"], attributes, relationships)
-            return r
+            return self.patch(self.current["id"], attributes, relationships)
+        return None
 
 
 class Reports(BaseModel):

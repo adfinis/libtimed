@@ -14,7 +14,7 @@ import requests
 class OIDCHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     code = None
 
-    def do_GET(self):
+    def do_GET(self):  # noqa: N802
         url_path = self.path
         # get the "code" parameter from the query string
         try:
@@ -86,12 +86,13 @@ class OIDCClient:
         token_response = requests.post(self.token_endpoint, data=token_request)
         # check for errors
         if token_response.status_code != 200:
-            print(f"Error: {token_response.status_code} {token_response.reason}")
-            print(token_response.text)
+            print(  # noqa: T201
+                f"Error: {token_response.status_code} {token_response.reason}\n"
+            )
+            print(token_response.text)  # noqa: T201
             return False
         # get the access token
-        token = token_response.json()["access_token"]
-        return token
+        return token_response.json()["access_token"]
 
     def check_expired(self, token):
         # decode the token
@@ -119,9 +120,8 @@ class OIDCClient:
 
     def authorize(self):
         cached_token = self.keyring_get()
-        if cached_token:
-            if self.check_expired(cached_token):
-                return cached_token
+        if cached_token and self.check_expired(cached_token):
+            return cached_token
 
         self.autoconfig()
         if self.start_browser_flow():
@@ -130,5 +130,4 @@ class OIDCClient:
                 return False
             self.keyring_set(token)
             return token
-        else:
-            return False
+        return False

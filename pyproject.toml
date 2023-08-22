@@ -30,7 +30,7 @@ pyfzf = "^0.3.1"
 
 [tool.ruff]
 line-length = 88
-select = ["F","E","W","I","N", "D", "B", "Q", "C4", "UP", "PT", "T20", "RET", "RUF", "SLF", "SIM"]
+select = ["F","E","W","I","N", "D", "B", "Q", "C4", "UP", "PT", "T20", "RET", "RUF", "SLF", "SIM", "C90"]
 src = ["src", "examples", "test"]
 ignore = [
     # make docstrings optional
@@ -51,6 +51,8 @@ ignore = [
     "SLF001",
 ]
 
+[tool.ruff.mccabe]
+max-complexity = 8
 
 [tool.ruff.extend-per-file-ignores]
 "examples/*.py" = ["T201"]

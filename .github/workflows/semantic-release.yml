@@ -47,11 +47,11 @@ jobs:
           default_author: github_actions
           add: pyproject.toml
 
-      - uses: actions/checkout@v3
-        name: Switch to new release
-        if: github.ref == 'refs/heads/main' && steps.semrel.outputs.version != ''
-        with:
-          ref: refs/tags/v${{ steps.semrel.outputs.version }}
+      # - uses: actions/checkout@v3
+      #   name: Switch to new release
+      #   if: github.ref == 'refs/heads/main' && steps.semrel.outputs.version != ''
+      #   with:
+      #     ref: refs/tags/v${{ steps.semrel.outputs.version }}
 
       - name: Publish release to pypi
         if: github.ref == 'refs/heads/main' && steps.semrel.outputs.version != ''

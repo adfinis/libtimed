@@ -167,7 +167,7 @@ class Time(BaseTransform):
 
     @staticmethod
     def deserialize(value) -> date | None:
-        return datetime.strptime(value, "%H:%M:%S") if value else None
+        return datetime.strptime(value, "%H:%M:%S").time() if value else None
 
 
 class Enum(BaseTransform):

@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from enum import Enum as EnumClass
 
 TIME_FORMAT = "%H:%M:%S"
@@ -154,10 +154,10 @@ class Time(BaseTransform):
     """Transform for times."""
 
     @staticmethod
-    def serialize(value: datetime | str, **_) -> str | None:
+    def serialize(value: time | str, **_) -> str | None:
         if isinstance(value, str):
             try:
-                value = datetime.strptime(value, TIME_FORMAT)
+                value = datetime.strptime(value, TIME_FORMAT).time()
             except ValueError as e:
                 raise SerializationError(
                     f"The provided value ({value}) is not formatted correctly ({TIME_FORMAT})."
@@ -167,7 +167,7 @@ class Time(BaseTransform):
 
     @staticmethod
     def deserialize(value) -> date | None:
-        return datetime.strptime(value, "%H:%M:%S") if value else None
+        return datetime.strptime(value, "%H:%M:%S").time() if value else None
 
 
 class Enum(BaseTransform):

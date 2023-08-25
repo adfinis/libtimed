@@ -43,7 +43,7 @@ class BaseModel:
     relationships: list[tuple]
     filters: list[tuple]
 
-    def _deserialize(self, item, included):
+    def _deserialize(self, item, included):  # noqa: C901
         for key, value in item["attributes"].items():
             transform = next(
                 (
@@ -263,7 +263,7 @@ class Activities(BaseModel):
     ]
 
     attributes = [
-        ("from-time", datetime.now(), transforms.Time),
+        ("from-time", datetime.now().time(), transforms.Time),
         ("to-time", None, transforms.Time),
         ("transferred", False, transforms.Type(bool)),
         COMMENT,

@@ -79,7 +79,9 @@ class OIDCClient:
 
     def start_device_flow(self):
         # construct the authorization request
-        auth_data = requests.post(self.device_endpoint, data={"client_id": self.client_id}).json()
+        auth_data = requests.post(
+            self.device_endpoint, data={"client_id": self.client_id}
+        ).json()
         verification_uri_complete = auth_data["verification_uri_complete"]
         verification_uri = auth_data["verification_uri"]
         device_code = auth_data["device_code"]
@@ -88,17 +90,22 @@ class OIDCClient:
         # open the browser to the authorization URL
         webbrowser.open_new(verification_uri_complete)
         # print manual instructions
-        print(f"Please visit {verification_uri} and enter the code {user_code}")
+        #
+        print(f"Please visit {verification_uri} and enter the code {user_code}")  # noqa: T201
         time.sleep(5)
 
         resp = {}
         while "access_token" not in resp:
-            resp =  requests.post(self.token_endpoint, data={"client_id": self.client_id, "grant_type": "urn:ietf:params:oauth:grant-type:device_code", "device_code": device_code}).json()
-            print(resp)
+            resp = requests.post(
+                self.token_endpoint,
+                data={
+                    "client_id": self.client_id,
+                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+                    "device_code": device_code,
+                },
+            ).json()
             time.sleep(5)
-        access_token = resp["access_token"]
-        return access_token
-
+        return resp["access_token"]
 
     def get_token(self):
         # construct the token request
@@ -145,6 +152,7 @@ class OIDCClient:
     def keyring_set(self, token):
         return True
         keyring.set_password("system", "libtimed_token_" + self.client_id, token)
+        return None
 
     def authorize(self):
         cached_token = self.keyring_get()
@@ -153,7 +161,7 @@ class OIDCClient:
 
         self.autoconfig()
         if self.use_device_flow:
-            if token:= self.start_device_flow():
+            if token := self.start_device_flow():
                 self.keyring_set(token)
                 return token
             return False

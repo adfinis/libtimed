@@ -146,13 +146,10 @@ class OIDCClient:
         return now.timestamp() < expires_at
 
     def keyring_get(self):
-        return []
         return keyring.get_password("system", "libtimed_token_" + self.client_id)
 
     def keyring_set(self, token):
-        return True
         keyring.set_password("system", "libtimed_token_" + self.client_id, token)
-        return None
 
     def authorize(self):
         cached_token = self.keyring_get()

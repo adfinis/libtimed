@@ -4,6 +4,7 @@ import base64
 import datetime
 import http.server
 import json
+import time
 import webbrowser
 from urllib.parse import urlparse
 
@@ -41,11 +42,12 @@ class OIDCHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 
 class OIDCClient:
-    def __init__(self, client_id, sso_url, sso_realm, auth_path):
+    def __init__(self, client_id, sso_url, sso_realm, auth_path, use_device_flow=False):
         self.client_id = client_id
         self.sso_url = sso_url
         self.sso_realm = sso_realm
         self.auth_path = auth_path
+        self.use_device_flow = use_device_flow
 
     def autoconfig(self):
         data = requests.get(
@@ -53,6 +55,7 @@ class OIDCClient:
         ).json()
         self.authorization_endpoint = data["authorization_endpoint"]
         self.token_endpoint = data["token_endpoint"]
+        self.device_endpoint = data["device_authorization_endpoint"]
 
     def start_browser_flow(self):
         # construct the authorization request
@@ -73,6 +76,29 @@ class OIDCClient:
 
         self.code = code
         return True
+
+    def start_device_flow(self):
+        # construct the authorization request
+        auth_data = requests.post(self.device_endpoint, data={"client_id": self.client_id}).json()
+        verification_uri_complete = auth_data["verification_uri_complete"]
+        verification_uri = auth_data["verification_uri"]
+        device_code = auth_data["device_code"]
+        user_code = auth_data["user_code"]
+
+        # open the browser to the authorization URL
+        webbrowser.open_new(verification_uri_complete)
+        # print manual instructions
+        print(f"Please visit {verification_uri} and enter the code {user_code}")
+        time.sleep(5)
+
+        resp = {}
+        while "access_token" not in resp:
+            resp =  requests.post(self.token_endpoint, data={"client_id": self.client_id, "grant_type": "urn:ietf:params:oauth:grant-type:device_code", "device_code": device_code}).json()
+            print(resp)
+            time.sleep(5)
+        access_token = resp["access_token"]
+        return access_token
+
 
     def get_token(self):
         # construct the token request
@@ -113,9 +139,11 @@ class OIDCClient:
         return now.timestamp() < expires_at
 
     def keyring_get(self):
+        return []
         return keyring.get_password("system", "libtimed_token_" + self.client_id)
 
     def keyring_set(self, token):
+        return True
         keyring.set_password("system", "libtimed_token_" + self.client_id, token)
 
     def authorize(self):
@@ -124,6 +152,12 @@ class OIDCClient:
             return cached_token
 
         self.autoconfig()
+        if self.use_device_flow:
+            if token:= self.start_device_flow():
+                self.keyring_set(token)
+                return token
+            return False
+
         if self.start_browser_flow():
             token = self.get_token()
             if not token:

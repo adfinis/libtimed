@@ -153,8 +153,17 @@ class Time(BaseTransform):
 
     """Transform for times."""
 
-    @staticmethod
-    def serialize(value: time | str, **_) -> str | None:
+    def __init__(self, return_datetime: bool = False):
+        # return_datetime will be removed at some point
+        # it defaults to True to maintain backwards compatibility
+        self.return_datetime = return_datetime
+
+    def _return_value(self, value: datetime):
+        if self.return_datetime:
+            return value
+        return value.time()
+
+    def serialize(self, value: time | str, **_) -> str | None:
         if isinstance(value, str):
             try:
                 value = datetime.strptime(value, TIME_FORMAT).time()
@@ -165,9 +174,10 @@ class Time(BaseTransform):
 
         return value.strftime(TIME_FORMAT) if value else None
 
-    @staticmethod
-    def deserialize(value) -> date | None:
-        return datetime.strptime(value, "%H:%M:%S").time() if value else None
+    def deserialize(self, value) -> time | datetime | None:
+        return (
+            self._return_value(datetime.strptime(value, "%H:%M:%S")) if value else None
+        )
 
 
 class Enum(BaseTransform):

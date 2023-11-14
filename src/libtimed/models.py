@@ -263,8 +263,8 @@ class Activities(BaseModel):
     ]
 
     attributes = [
-        ("from-time", datetime.now().time(), transforms.Time),
-        ("to-time", None, transforms.Time),
+        ("from-time", datetime.now().time(), transforms.Time(True)),
+        ("to-time", None, transforms.Time(True)),
         ("transferred", False, transforms.Type(bool)),
         COMMENT,
         DATE,

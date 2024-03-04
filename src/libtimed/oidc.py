@@ -142,7 +142,6 @@ class OIDCClient:
         return keyring.get_password("system", "libtimed_token_" + self.client_id)
 
     def keyring_set(self, token):
-        return True
         keyring.set_password("system", "libtimed_token_" + self.client_id, token)
 
     def authorize(self):

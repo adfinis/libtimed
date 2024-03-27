@@ -32,6 +32,7 @@ jobs:
           cache: "poetry"
 
       - run: poetry install
+        if: github.ref == 'refs/heads/main' && steps.semrel.outputs.version != ''
 
       - name: Configure poetry
         if: github.ref == 'refs/heads/main' && steps.semrel.outputs.version != ''

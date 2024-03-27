@@ -17,11 +17,10 @@ inflection = "^0.5.1"
 requests-cache = "^1.1.0"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.3.0"
 pytest = "^7.3.2"
 pytest-coverage = "^0.0"
 pdbpp = "^0.10.3"
-ruff = "^0.0.282"
+ruff = "^0.3.4"
 
 # Dependencies only used in examples
 [tool.poetry.group.example.dependencies]
@@ -29,9 +28,16 @@ pyfzf = "^0.3.1"
 
 
 [tool.ruff]
-line-length = 88
-select = ["F","E","W","I","N", "D", "B", "Q", "C4", "UP", "PT", "T20", "RET", "RUF", "SLF", "SIM", "C90"]
+line-length = 100
 src = ["src", "examples", "test"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "tab"
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["F","E","W","I","N", "D", "B", "Q", "C4", "UP", "PT", "T20", "RET", "RUF", "SLF", "SIM", "C90"]
 ignore = [
     # make docstrings optional
     "D100",
@@ -45,19 +51,37 @@ ignore = [
     "D211",
     "D213",
     "RUF012",
-    # line length is handled by black
+    # line length is handled by formatter
     "E501",
     # disable this for now
     "SLF001",
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
+    "ISC001",
+    "ISC002",
+    # this conflicts for some reason
+    "D203"
 ]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 8
 
-[tool.ruff.extend-per-file-ignores]
+[tool.ruff.lint.extend-per-file-ignores]
 "examples/*.py" = ["T201"]
+"src/libtimed/oidc.py" = ["T201"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["libtimed"]
 combine-as-imports = true
 

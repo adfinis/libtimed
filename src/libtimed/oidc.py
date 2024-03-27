@@ -79,7 +79,9 @@ class OIDCClient:
 
     def start_device_flow(self):
         # construct the authorization request
-        auth_data = requests.post(self.device_endpoint, data={"client_id": self.client_id}).json()
+        auth_data = requests.post(
+            self.device_endpoint, data={"client_id": self.client_id}
+        ).json()
         verification_uri_complete = auth_data["verification_uri_complete"]
         verification_uri = auth_data["verification_uri"]
         device_code = auth_data["device_code"]
@@ -93,12 +95,17 @@ class OIDCClient:
 
         resp = {}
         while "access_token" not in resp:
-            resp =  requests.post(self.token_endpoint, data={"client_id": self.client_id, "grant_type": "urn:ietf:params:oauth:grant-type:device_code", "device_code": device_code}).json()
+            resp = requests.post(
+                self.token_endpoint,
+                data={
+                    "client_id": self.client_id,
+                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+                    "device_code": device_code,
+                },
+            ).json()
             print(resp)
             time.sleep(5)
-        access_token = resp["access_token"]
-        return access_token
-
+        return resp["access_token"]
 
     def get_token(self):
         # construct the token request
@@ -112,10 +119,8 @@ class OIDCClient:
         token_response = requests.post(self.token_endpoint, data=token_request)
         # check for errors
         if token_response.status_code != 200:
-            print(  # noqa: T201
-                f"Error: {token_response.status_code} {token_response.reason}\n"
-            )
-            print(token_response.text)  # noqa: T201
+            print(f"Error: {token_response.status_code} {token_response.reason}\n")
+            print(token_response.text)
             return False
         # get the access token
         return token_response.json()["access_token"]
@@ -151,7 +156,7 @@ class OIDCClient:
 
         self.autoconfig()
         if self.use_device_flow:
-            if token:= self.start_device_flow():
+            if token := self.start_device_flow():
                 self.keyring_set(token)
                 return token
             return False

@@ -6,11 +6,11 @@ help:
 	
 .PHONY: lint
 lint: ## Lint the code
-	@poetry run sh -c "black --check . ; ruff ."
+	@poetry run sh -c "ruff format --check . ; ruff check ."
 
 .PHONY: lint-fix
 lint-fix: ## Lint and fix code
-	@poetry run sh -c "black . && ruff . --fix"
+	@poetry run sh -c "ruff format . && ruff check . --fix"
 
 .PHONY: test
 test: ## Test the code

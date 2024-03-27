@@ -25,7 +25,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && steps.semrel.outputs.version != ''
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         if: github.ref == 'refs/heads/main' && steps.semrel.outputs.version != ''
         with:
           python-version: "3.x"

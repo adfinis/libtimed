@@ -12,12 +12,12 @@ packages = [{ include = "libtimed", from = "src" }]
 [tool.poetry.dependencies]
 python = "^3.10"
 requests = "^2.31.0"
-keyring = "^24.1.0"
+keyring = ">=24.1,<26.0"
 inflection = "^0.5.1"
 requests-cache = "^1.1.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.3.2"
+pytest = ">=7.3.2,<9.0.0"
 pytest-coverage = "^0.0"
 pdbpp = "^0.10.3"
 ruff = "^0.3.4"

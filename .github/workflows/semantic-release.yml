@@ -1,10 +1,8 @@
 ---
-
 name: Semantic Release
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   semantic-release:
@@ -20,8 +18,8 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
-          cache: 'poetry'
+          python-version: "3.x"
+          cache: "poetry"
 
       - run: poetry install
 

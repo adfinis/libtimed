@@ -22,21 +22,21 @@ client = TimedAPIClient(token, URL, API_NAMESPACE)
 customers = client.customers.get()
 
 customer_name = pyfzf.FzfPrompt().prompt(
-	[customer["attributes"]["name"] for customer in customers]
+    [customer["attributes"]["name"] for customer in customers]
 )[0]
 
 if not customer_name:
-	exit()
+    exit()
 
 customer = next(
-	customer for customer in customers if customer["attributes"]["name"] == customer_name
+    customer for customer in customers if customer["attributes"]["name"] == customer_name
 )
 
 projects = client.projects.get({"customer": customer["id"]})
 
 project_name = pyfzf.FzfPrompt().prompt([project["attributes"]["name"] for project in projects])
 if not project_name:
-	exit()
+    exit()
 
 project = next(project for project in projects if project["attributes"]["name"] == project_name[0])
 tasks = client.tasks.get({"project": project["id"]})
@@ -44,7 +44,7 @@ tasks = client.tasks.get({"project": project["id"]})
 task_name = pyfzf.FzfPrompt().prompt([task["attributes"]["name"] for task in tasks])
 
 if not task_name:
-	exit()
+    exit()
 
 task = next(task for task in tasks if task["attributes"]["name"] == task_name[0])
 
@@ -55,8 +55,8 @@ comment = input("Task comment: ")
 
 r = client.reports.post({"duration": duration, "comment": comment}, {"task": task["id"]})
 if r.status_code == 201:
-	print("Report successfully created!")
+    print("Report successfully created!")
 
 else:
-	print("Error while trying to create report!")
-	print(r.json())
+    print("Error while trying to create report!")
+    print(r.json())

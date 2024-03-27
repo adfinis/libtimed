@@ -33,7 +33,7 @@ src = ["src", "examples", "test"]
 
 [tool.ruff.format]
 quote-style = "double"
-indent-style = "tab"
+indent-style = "space"
 docstring-code-format = true
 
 [tool.ruff.lint]

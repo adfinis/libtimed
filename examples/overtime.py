@@ -9,12 +9,8 @@ API_NAMESPACE = "api/v1"
 
 # Auth stuff
 CLIENT_ID = "timed-client-id"
-AUTH_ENDPOINT = (
-    "https://sso.example.com/auth/realms/example/protocol/openid-connect/auth"
-)
-TOKEN_ENDPOINT = (
-    "https://sso.example.com/auth/realms/example/protocol/openid-connect/token"
-)
+AUTH_ENDPOINT = "https://sso.example.com/auth/realms/example/protocol/openid-connect/auth"
+TOKEN_ENDPOINT = "https://sso.example.com/auth/realms/example/protocol/openid-connect/token"
 AUTH_PATH = "timedctl/auth"
 
 oidc_client = OIDCClient(CLIENT_ID, AUTH_ENDPOINT, TOKEN_ENDPOINT, AUTH_PATH)

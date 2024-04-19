@@ -20,7 +20,7 @@ requests-cache = "^1.1.0"
 pytest = ">=7.3.2,<9.0.0"
 pytest-coverage = "^0.0"
 pdbpp = "^0.10.3"
-ruff = "^0.3.4"
+ruff = ">=0.3.4,<0.5.0"
 
 # Dependencies only used in examples
 [tool.poetry.group.example.dependencies]

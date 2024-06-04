@@ -6,7 +6,7 @@ import http.server
 import json
 import time
 import webbrowser
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 import keyring
 import requests
@@ -19,7 +19,7 @@ class OIDCHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         url_path = self.path
         # get the "code" parameter from the query string
         try:
-            OIDCHTTPRequestHandler.code = urlparse(url_path).query.split("=")[2]
+            OIDCHTTPRequestHandler.code = parse_qs(urlparse(url_path).query)["code"][0]
         except IndexError:
             self.send_response(400)
             self.send_header("Content-type", "text/html")

@@ -136,10 +136,9 @@ class BaseModel:
     def delete(self, id) -> Response:
         return self.client.session.delete(f"{self.url}/{id}")
 
-    @classmethod
     @property
-    def resource_name(cls):
-        return underscore(cls.__name__).replace("_", "-")
+    def resource_name(self):
+        return underscore(self.__class__.__name__).replace("_", "-")
 
     def _parse_post_json(self, attributes: dict | None, relationships: dict | None) -> dict:
         return {
@@ -183,7 +182,7 @@ class BaseModel:
 
     @functools.cached_property
     def url(self):
-        return self.client.url + self.resource_name
+        return self.client.url() + self.resource_name
 
 
 class Users(GetOnlyMixin, BaseModel):

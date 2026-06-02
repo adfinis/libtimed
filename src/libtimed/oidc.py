@@ -15,7 +15,7 @@ import requests
 class OIDCHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     code = None
 
-    def do_GET(self):  # noqa: N802
+    def do_GET(self):
         url_path = self.path
         # get the "code" parameter from the query string
         try:

@@ -42,7 +42,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && steps.semrel.outputs.version != ''
         run: poetry version ${{ steps.semrel.outputs.version }}
 
-      - uses: EndBug/add-and-commit@v9
+      - uses: EndBug/add-and-commit@v10
         if: github.ref == 'refs/heads/main' && steps.semrel.outputs.version != ''
         with:
           message: "chore(version): bump"
